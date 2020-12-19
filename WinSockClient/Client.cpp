@@ -15,7 +15,6 @@ bool InitializeWindowsSockets();
 int main(int argc,char* argv[])
 {
     // Server address
-	printf("TEST");
     sockaddr_in serverAddress;
     // size of sockaddr structure    
 	int sockAddrLen = sizeof(struct sockaddr);

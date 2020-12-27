@@ -19,12 +19,23 @@ public:
 		}
 	}
 
+	char* RetrieveDataPosition(int num) {
+		char *pos = p;
+		for (int i = 0; i < length; i++) {
+			if (status[i] == num) {
+				pos += i * unitSize;
+				return pos;
+			}
+		}
+		return NULL;
+	}
+
 	void ReleaseBufferPool() {
 		free(p);
 		free(status);
 	}
 
-	bool SaveData(char* data, int num) {
+	void SaveData(char* data, int num) {
 		char* emptySpace = NULL;
 		for (int i = 0; i < length; i++) {
 			if (status[i] == 0) {
@@ -34,11 +45,18 @@ public:
 			}
 		}
 		if (emptySpace == NULL) {
-			return false;
+			int oldLength = length;
+			length *= 2;
+			p = (char*)realloc(p, length*unitSize);
+			status = (int*)realloc(status, length*sizeof(int));
+			for (int j = oldLength; j < length; j++) {
+				status[j] = 0;
+			}
+			memcpy(p + oldLength * unitSize, data, unitSize);
+			status[oldLength] = num;
 		}
 		else {
 			memcpy(emptySpace, data, unitSize);
-			return true;
 		}
 	}
 

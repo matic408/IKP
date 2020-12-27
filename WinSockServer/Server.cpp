@@ -1,12 +1,13 @@
 #include <winsock2.h>
 #include <stdio.h>
+#include "..\BufferPoolLib\framework.h"
 
 #define SERVER_PORT 15000
 #define SERVER_SLEEP_TIME 50
 #define ACCESS_BUFFER_SIZE 1024
 #define IP_ADDRESS_LEN 16
 
-#define nes 2
+#define SEGMENT_SIZE 5
 
 // Initializes WinSock2 library
 // Returns true if succeeded, false otherwise.
@@ -14,6 +15,27 @@ bool InitializeWindowsSockets();
 
 int main(int argc,char* argv[])
 {
+	BufferPool bufferPool = CreateBufferPool(SEGMENT_SIZE, 3);
+	SaveData(&bufferPool, "abcd", 1);
+	SaveData(&bufferPool, "efg", 2);
+	SaveData(&bufferPool, "1234", 3);
+	SaveData(&bufferPool, "sklj", 4);
+
+	printf("%s", bufferPool.RetrieveDataPosition(1));
+	printf("%s", bufferPool.RetrieveDataPosition(2));
+	printf("%s", bufferPool.RetrieveDataPosition(3));
+	printf("%s", bufferPool.RetrieveDataPosition(4));
+
+	ReleaseData(&bufferPool, 1);
+	ReleaseData(&bufferPool, 2);
+	ReleaseData(&bufferPool, 3);
+	ReleaseData(&bufferPool, 4);
+
+	printf("%s", bufferPool.RetrieveDataPosition(1));
+	printf("%s", bufferPool.RetrieveDataPosition(2));
+	printf("%s", bufferPool.RetrieveDataPosition(3));
+	printf("%s", bufferPool.RetrieveDataPosition(4));
+
     // Server address
     sockaddr_in serverAddress;
 	// Server's socket

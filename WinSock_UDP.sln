@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinSockClient", "WinSockCli
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BufferPoolLib", "BufferPoolLib\BufferPoolLib.vcxproj", "{3CF530C7-0C96-4EE1-8F64-DD2D3B16F4BF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SafeUDPLib", "SafeUDPLib\SafeUDPLib.vcxproj", "{3F899CAE-02DA-483E-92E2-8F13C95DDEE6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -37,6 +39,14 @@ Global
 		{3CF530C7-0C96-4EE1-8F64-DD2D3B16F4BF}.Release|Win32.Build.0 = Release|Win32
 		{3CF530C7-0C96-4EE1-8F64-DD2D3B16F4BF}.Release|x64.ActiveCfg = Release|x64
 		{3CF530C7-0C96-4EE1-8F64-DD2D3B16F4BF}.Release|x64.Build.0 = Release|x64
+		{3F899CAE-02DA-483E-92E2-8F13C95DDEE6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3F899CAE-02DA-483E-92E2-8F13C95DDEE6}.Debug|Win32.Build.0 = Debug|Win32
+		{3F899CAE-02DA-483E-92E2-8F13C95DDEE6}.Debug|x64.ActiveCfg = Debug|x64
+		{3F899CAE-02DA-483E-92E2-8F13C95DDEE6}.Debug|x64.Build.0 = Debug|x64
+		{3F899CAE-02DA-483E-92E2-8F13C95DDEE6}.Release|Win32.ActiveCfg = Release|Win32
+		{3F899CAE-02DA-483E-92E2-8F13C95DDEE6}.Release|Win32.Build.0 = Release|Win32
+		{3F899CAE-02DA-483E-92E2-8F13C95DDEE6}.Release|x64.ActiveCfg = Release|x64
+		{3F899CAE-02DA-483E-92E2-8F13C95DDEE6}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

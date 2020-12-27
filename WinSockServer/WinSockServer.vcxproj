@@ -80,6 +80,11 @@
   <ItemGroup>
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BufferPoolLib\BufferPoolLib.vcxproj">
+      <Project>{3cf530c7-0c96-4ee1-8f64-dd2d3b16f4bf}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

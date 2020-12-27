@@ -4,5 +4,7 @@
 #include "BufferPool.h"
 
 BufferPool CreateBufferPool(int size, int amount);
-void ReleaseBufferPool(BufferPool b);
-
+void ReleaseBufferPool(BufferPool* b);
+char* RetrieveDataPosition(BufferPool* b, int num);
+void SaveData(BufferPool* b, char* data, int num);
+bool ReleaseData(BufferPool* b, int num);

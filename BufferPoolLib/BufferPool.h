@@ -61,6 +61,9 @@ public:
 	}
 
 	bool ReleaseData(int num) {
+		if (num <= 0) {
+			return false;
+		}
 		for (int i = 0; i < length; i++) {
 			if (status[i] == num) {
 				status[i] = 0;

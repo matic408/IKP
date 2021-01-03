@@ -81,8 +81,8 @@
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BufferPoolLib\BufferPoolLib.vcxproj">
-      <Project>{3cf530c7-0c96-4ee1-8f64-dd2d3b16f4bf}</Project>
+    <ProjectReference Include="..\SafeUDPLib\SafeUDPLib.vcxproj">
+      <Project>{3f899cae-02da-483e-92e2-8f13c95ddee6}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

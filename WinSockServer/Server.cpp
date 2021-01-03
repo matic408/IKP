@@ -1,6 +1,6 @@
 #include <winsock2.h>
 #include <stdio.h>
-#include "..\BufferPoolLib\framework.h"
+#include "..\SafeUDPLib\framework.h"
 
 #define SERVER_PORT 15000
 #define SERVER_SLEEP_TIME 50
@@ -15,27 +15,6 @@ bool InitializeWindowsSockets();
 
 int main(int argc,char* argv[])
 {
-	BufferPool bufferPool = CreateBufferPool(SEGMENT_SIZE, 3);
-	SaveData(&bufferPool, "abcd", 1);
-	SaveData(&bufferPool, "efg", 2);
-	SaveData(&bufferPool, "1234", 3);
-	SaveData(&bufferPool, "sklj", 4);
-
-	printf("%s", bufferPool.RetrieveDataPosition(1));
-	printf("%s", bufferPool.RetrieveDataPosition(2));
-	printf("%s", bufferPool.RetrieveDataPosition(3));
-	printf("%s", bufferPool.RetrieveDataPosition(4));
-
-	ReleaseData(&bufferPool, 1);
-	ReleaseData(&bufferPool, 2);
-	ReleaseData(&bufferPool, 3);
-	ReleaseData(&bufferPool, 4);
-
-	printf("%s", bufferPool.RetrieveDataPosition(1));
-	printf("%s", bufferPool.RetrieveDataPosition(2));
-	printf("%s", bufferPool.RetrieveDataPosition(3));
-	printf("%s", bufferPool.RetrieveDataPosition(4));
-
     // Server address
     sockaddr_in serverAddress;
 	// Server's socket
@@ -136,18 +115,24 @@ int main(int argc,char* argv[])
             continue;
         }
 
-        iResult = recvfrom(serverSocket,
+		iResult = SafeUDPReceive(&serverSocket,
+			accessBuffer,
+			ACCESS_BUFFER_SIZE,
+			(LPSOCKADDR)&clientAddress,
+			sockAddrLen);
+
+        /*iResult = recvfrom(serverSocket,
                            accessBuffer,
                            ACCESS_BUFFER_SIZE,
                            0,
                            (LPSOCKADDR)&clientAddress,
-                           &sockAddrLen);
+                           &sockAddrLen);*/
 
-        if (iResult == SOCKET_ERROR)
-        {
-            printf("recvfrom failed with error: %d\n", WSAGetLastError());
-            continue;
-        }
+        //if (iResult == SOCKET_ERROR)
+        //{
+        //    printf("recvfrom failed with error: %d\n", WSAGetLastError());
+        //    continue;
+        //}
 
         char ipAddress[IP_ADDRESS_LEN];
 		// copy client ip to local char[]

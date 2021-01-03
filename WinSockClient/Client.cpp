@@ -1,6 +1,7 @@
 #include <winsock2.h>
 #include <stdio.h>
 #include <conio.h>
+#include "..\SafeUDPLib\framework.h"
 
 #define SERVER_PORT 15000
 #define OUTGOING_BUFFER_SIZE 1024
@@ -52,12 +53,18 @@ int main(int argc,char* argv[])
 	// Read string from user into outgoing buffer
     gets_s(outgoingBuffer, OUTGOING_BUFFER_SIZE);
 	
-    iResult = sendto(clientSocket,
+	iResult = SafeUDPSend(&clientSocket,
+		outgoingBuffer,
+		strlen(outgoingBuffer),
+		(LPSOCKADDR)&serverAddress,
+		sockAddrLen);
+
+    /*iResult = sendto(clientSocket,
 					 outgoingBuffer,
 					 strlen(outgoingBuffer),
 					 0,
 					 (LPSOCKADDR)&serverAddress,
-					 sockAddrLen);
+					 sockAddrLen);*/
 
     if (iResult == SOCKET_ERROR)
     {

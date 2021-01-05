@@ -7,6 +7,11 @@
 #define SEGMENT_SIZE 5
 #define SLIDING_WINDOW_WIDTH 4
 
+struct data {
+	int num;
+	char text[SEGMENT_SIZE];
+};
+
 int SafeUDPSend(SOCKET *clientSocket, char* sendingData, int sizeOfData, LPSOCKADDR address, int addressLength) {
 
 	sockaddr_in clientAddress;
@@ -15,32 +20,39 @@ int SafeUDPSend(SOCKET *clientSocket, char* sendingData, int sizeOfData, LPSOCKA
 	//u jednom momentu dovoljno za 2 slanja + 1
 	BufferPool bufferPool = CreateBufferPool(SEGMENT_SIZE, SLIDING_WINDOW_WIDTH * 2);
 
+	int SegmentsToSend = sizeOfData / SEGMENT_SIZE;
+	if (sizeOfData % SEGMENT_SIZE != 0) {
+		SegmentsToSend++;
+	}
+	int HighestSeqNum = SegmentsToSend;
+
 	int SavedSequenceNum = 0;
 	int SequenceNumToSend = 1;
 	int TotalAmountToSend = sizeOfData;
 	int RemovedFromPoolCount = SLIDING_WINDOW_WIDTH * 2;
 	int lastAck = 0;
-	int leftovers;
-	char* sendData = (char*)malloc(sizeof(int) + SEGMENT_SIZE);
+	int SentWithoutAck = 0;
+	char* sendData = (char*)malloc(4 + SEGMENT_SIZE);
 	int* recievedAck = (int*)malloc(sizeof(int));
 	char *p = NULL;
 
+	data temp;
+
 	FD_SET set;
 	timeval timeVal;
-	timeVal.tv_sec = 1;
+	timeVal.tv_sec = 8;
 	timeVal.tv_usec = 0;
 
-	while (TotalAmountToSend > 0) {
+	while (SegmentsToSend > 0) {
 		//popuniti bufferpool koliko je moguce
 		for (int i = 0; i < RemovedFromPoolCount; i++) {
-			if (SavedSequenceNum < sizeOfData) {
+			if (SavedSequenceNum < HighestSeqNum) {
 				SavedSequenceNum++;
-				SaveData(&bufferPool, sendingData + (i*SEGMENT_SIZE), SavedSequenceNum);
+				SaveData(&bufferPool, sendingData + ((SavedSequenceNum - 1)*SEGMENT_SIZE), SavedSequenceNum);
 			}
 			else {
 				break;
 			}
-
 		}
 		RemovedFromPoolCount = 0;
 
@@ -48,21 +60,21 @@ int SafeUDPSend(SOCKET *clientSocket, char* sendingData, int sizeOfData, LPSOCKA
 		for (int i = 0; i < SLIDING_WINDOW_WIDTH; i++) {
 			p = RetrieveDataPosition(&bufferPool, SequenceNumToSend);
 			if (p == NULL) {
-				leftovers = i;
+				SentWithoutAck = i;
 				break;
 			}
-			*sendData = SequenceNumToSend;
-			leftovers = SLIDING_WINDOW_WIDTH;
-			memcpy(sendData + sizeof(int), p, SEGMENT_SIZE);
+			temp.num = htonl(SequenceNumToSend);
+			memcpy(temp.text,p,SEGMENT_SIZE);
+			SentWithoutAck = SLIDING_WINDOW_WIDTH;
+			//memcpy(sendData, &SequenceNumToSend, 4);
+			//memcpy(sendData + sizeof(int), p, SEGMENT_SIZE);
 			SequenceNumToSend++;
 			sendto(*clientSocket,
-				sendData,
-				(sizeof(int) + SEGMENT_SIZE),
+				(char*)&temp,
+				(int)sizeof(data),
 				0,
 				address,
 				addressLength);
-			//maybe provera
-
 		}
 
 		FD_ZERO(&set);
@@ -76,7 +88,7 @@ int SafeUDPSend(SOCKET *clientSocket, char* sendingData, int sizeOfData, LPSOCKA
 
 		if (iResult == 0)
 		{
-			SequenceNumToSend -= leftovers;
+			SequenceNumToSend -= SentWithoutAck;
 			continue;
 		}
 
@@ -86,16 +98,17 @@ int SafeUDPSend(SOCKET *clientSocket, char* sendingData, int sizeOfData, LPSOCKA
 			0,
 			(LPSOCKADDR)&clientAddress,
 			&sockAddrLen);
+		*recievedAck = ntohl(*recievedAck);
 
-		for (int i = *recievedAck - 1; i >= lastAck; i--) {
+		for (int i = *recievedAck - 1; i > lastAck; i--) {
 			if (ReleaseData(&bufferPool, i)) {
 				RemovedFromPoolCount++;
 			}
 		}
 
-		lastAck = *recievedAck;
-		SequenceNumToSend = lastAck;
-		TotalAmountToSend -= RemovedFromPoolCount;
+		lastAck = *recievedAck - 1;
+		SequenceNumToSend = *recievedAck;
+		SegmentsToSend -= RemovedFromPoolCount;
 
 		if (iResult == SOCKET_ERROR)
 		{
@@ -115,15 +128,17 @@ int SafeUDPReceive(SOCKET *serverSocket, char * receivingData, int sizeOfBuffer,
 	int iResult = 0;
 	int expectedSeqNum = 1;
 	char* received = (char*)malloc(sizeof(SEGMENT_SIZE) + 4);
+	data* temp;
+	sockaddr_in serverAddress;
+	memset(&serverAddress, 0, sizeof(sockaddr_in));
+	int sockAddrLen = sizeof(struct sockaddr);
+
+	
 
 	//BufferPool pool = CreateBufferPool(SEGMENT_SIZE, SLIDING_WINDOW_WIDTH * 2);
 
 	FD_SET set;
 	timeval timeVal;
-
-	FD_ZERO(&set);
-	// Add socket we will wait to read from
-	FD_SET(*serverSocket, &set);
 
 	timeVal.tv_sec = 1;
 	timeVal.tv_usec = 0;
@@ -134,12 +149,12 @@ int SafeUDPReceive(SOCKET *serverSocket, char * receivingData, int sizeOfBuffer,
 	while (1) {
 
 		for (int i = 0; i < SLIDING_WINDOW_WIDTH; i++) {
+			FD_ZERO(&set);
+			FD_SET(*serverSocket, &set);
 
 			iResult = select(0 /* ignored */, &set, NULL, NULL, &timeVal);
 
 			if (iResult == 0) {
-
-
 				countForEnd++;
 				break;
 			}
@@ -147,13 +162,15 @@ int SafeUDPReceive(SOCKET *serverSocket, char * receivingData, int sizeOfBuffer,
 
 			iResult = recvfrom(*serverSocket,
 				received,
-				sizeof(SEGMENT_SIZE) + 4,
+				sizeof(data),
 				0,
-				(LPSOCKADDR)&address,
-				&addressLength);
+				(LPSOCKADDR)&serverAddress,
+				&sockAddrLen);
+			temp = (data*)received;
+			temp->num = ntohl(temp->num);
 
-			if (expectedSeqNum == (int)(*receivingData)) {
-				memcpy((receivingData + SEGMENT_SIZE * (expectedSeqNum - 1)), received + 4, SEGMENT_SIZE);
+			if (expectedSeqNum == temp->num) {
+				memcpy((receivingData + SEGMENT_SIZE * (expectedSeqNum - 1)), temp->text, SEGMENT_SIZE);
 				expectedSeqNum++;
 			}
 			else {
@@ -162,17 +179,18 @@ int SafeUDPReceive(SOCKET *serverSocket, char * receivingData, int sizeOfBuffer,
 
 		}
 
-		if (countForEnd == 3) {
-			break;
-		}
-
-		sendto(*serverSocket,
+		//if (countForEnd == 30) {
+		//	break;
+		//}
+		expectedSeqNum = htonl(expectedSeqNum);
+		iResult = sendto(*serverSocket,
 			(char*)&expectedSeqNum,
 			(sizeof(int)),
 			0,
-			address,
-			addressLength);
-
+			(LPSOCKADDR)serverAddress,
+			sockAddrLen);
+		expectedSeqNum = ntohl(expectedSeqNum);
+		int x = WSAGetLastError();
 	}
 
 	free(received);

@@ -4,6 +4,8 @@
 #include "..\SafeUDPLib\framework.h"
 
 #define SERVER_PORT 15000
+#define SERVER_PORT2 15001
+
 #define OUTGOING_BUFFER_SIZE 1024
 // for demonstration purposes we will hard code
 // local host ip adderss
@@ -16,24 +18,32 @@ bool InitializeWindowsSockets();
 int main(int argc,char* argv[])
 {
     // Server address
-    sockaddr_in serverAddress;
+    sockaddr_in sendingAddress;
+    sockaddr_in recievingAddress;
     // size of sockaddr structure    
 	int sockAddrLen = sizeof(struct sockaddr);
 	// buffer we will use to store message
     char outgoingBuffer[OUTGOING_BUFFER_SIZE];
     // port used for communication with server
     int serverPort = SERVER_PORT;
+    int serverPort2 = SERVER_PORT2;
 	// variable used to store function return value
 	int iResult;
 
     // Initialize windows sockets for this process
     InitializeWindowsSockets();
 
-    // Initialize serverAddress structure
-    memset((char*)&serverAddress,0,sizeof(serverAddress));
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_addr.s_addr = inet_addr(SERVER_IP_ADDERESS);
-    serverAddress.sin_port = htons((u_short)serverPort);
+    //radice send na portu 15000
+    memset((char*)&sendingAddress,0,sizeof(sendingAddress));
+    sendingAddress.sin_family = AF_INET;
+    sendingAddress.sin_addr.s_addr = inet_addr(SERVER_IP_ADDERESS);
+    sendingAddress.sin_port = htons((u_short)serverPort);
+	
+	//radice recieve na portu 15001
+    memset((char*)&recievingAddress,0,sizeof(recievingAddress));
+    recievingAddress.sin_family = AF_INET;
+    recievingAddress.sin_addr.s_addr = INADDR_ANY;
+    recievingAddress.sin_port = htons(serverPort2);
 
 	// create a socket
     SOCKET clientSocket = socket(AF_INET,      // IPv4 address famly
@@ -48,6 +58,8 @@ int main(int argc,char* argv[])
         return 1;
     }
 
+	iResult = bind(clientSocket, (LPSOCKADDR)&recievingAddress, sizeof(recievingAddress));
+
 	printf("Enter message from server:\n");
 
 	// Read string from user into outgoing buffer
@@ -56,7 +68,8 @@ int main(int argc,char* argv[])
 	iResult = SafeUDPSend(&clientSocket,
 		outgoingBuffer,
 		strlen(outgoingBuffer),
-		(LPSOCKADDR)&serverAddress,
+		(LPSOCKADDR)&sendingAddress,
+		(LPSOCKADDR)&recievingAddress,
 		sockAddrLen);
 
     /*iResult = sendto(clientSocket,

@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BufferPoolLib", "BufferPool
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SafeUDPLib", "SafeUDPLib\SafeUDPLib.vcxproj", "{3F899CAE-02DA-483E-92E2-8F13C95DDEE6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CRCLib", "CRCLib\CRCLib.vcxproj", "{35AC294D-B21A-482F-9F3D-2EFD10B84233}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -47,6 +49,14 @@ Global
 		{3F899CAE-02DA-483E-92E2-8F13C95DDEE6}.Release|Win32.Build.0 = Release|Win32
 		{3F899CAE-02DA-483E-92E2-8F13C95DDEE6}.Release|x64.ActiveCfg = Release|x64
 		{3F899CAE-02DA-483E-92E2-8F13C95DDEE6}.Release|x64.Build.0 = Release|x64
+		{35AC294D-B21A-482F-9F3D-2EFD10B84233}.Debug|Win32.ActiveCfg = Debug|Win32
+		{35AC294D-B21A-482F-9F3D-2EFD10B84233}.Debug|Win32.Build.0 = Debug|Win32
+		{35AC294D-B21A-482F-9F3D-2EFD10B84233}.Debug|x64.ActiveCfg = Debug|x64
+		{35AC294D-B21A-482F-9F3D-2EFD10B84233}.Debug|x64.Build.0 = Debug|x64
+		{35AC294D-B21A-482F-9F3D-2EFD10B84233}.Release|Win32.ActiveCfg = Release|Win32
+		{35AC294D-B21A-482F-9F3D-2EFD10B84233}.Release|Win32.Build.0 = Release|Win32
+		{35AC294D-B21A-482F-9F3D-2EFD10B84233}.Release|x64.ActiveCfg = Release|x64
+		{35AC294D-B21A-482F-9F3D-2EFD10B84233}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

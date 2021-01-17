@@ -3,7 +3,6 @@
 #include "..\SafeUDPLib\framework.h"
 
 #define SERVER_PORT 15000
-#define SERVER_PORT2 15001
 #define SERVER_SLEEP_TIME 50
 #define ACCESS_BUFFER_SIZE 1024
 #define IP_ADDRESS_LEN 16
@@ -19,11 +18,9 @@ bool InitializeWindowsSockets();
 int main(int argc,char* argv[])
 {
     // Server address
-    sockaddr_in sendingAddress;
     sockaddr_in recievingAddress;
 	// Server's socket
     int serverPort = SERVER_PORT;
-    int serverPort2 = SERVER_PORT2;
 	// size of sockaddr structure
     int sockAddrLen=sizeof(struct sockaddr);
 	// buffer we will use to receive client message
@@ -37,12 +34,6 @@ int main(int argc,char* argv[])
         // by InitializeWindowsSockets() function
         return 1;
     }
-
-    // radice send na portu 15001
-    memset((char*)&sendingAddress,0,sizeof(sendingAddress));
-	sendingAddress.sin_family = AF_INET; /*set server address protocol family*/
-	sendingAddress.sin_addr.s_addr = inet_addr(SERVER_IP_ADDERESS);
-	sendingAddress.sin_port = htons((u_short)serverPort2);
 	
 	// radice recieve na portu 15000
     memset((char*)&recievingAddress,0,sizeof(recievingAddress));
@@ -63,16 +54,16 @@ int main(int argc,char* argv[])
         return 1;
     }
 
-    // Bind port number and local address to socket
-    //iResult = bind(serverSocket,(LPSOCKADDR)&recievingAddress,sizeof(recievingAddress));
+     //Bind port number and local address to socket
+    iResult = bind(serverSocket,(LPSOCKADDR)&recievingAddress,sizeof(recievingAddress));
 
-    //if (iResult == SOCKET_ERROR)
-    //{
-    //    printf("Socket bind failed with error: %d\n", WSAGetLastError());
-    //    closesocket(serverSocket);
-    //    WSACleanup();
-    //    return 1;
-    //}
+    if (iResult == SOCKET_ERROR)
+    {
+        printf("Socket bind failed with error: %d\n", WSAGetLastError());
+        closesocket(serverSocket);
+        WSACleanup();
+        return 1;
+    }
 
     // Set socket to nonblocking mode
     unsigned long int nonBlockingMode = 1;
@@ -129,33 +120,22 @@ int main(int argc,char* argv[])
 		iResult = SafeUDPReceive(&serverSocket,
 			accessBuffer,
 			ACCESS_BUFFER_SIZE,
-			(LPSOCKADDR)&sendingAddress,
 			(LPSOCKADDR)&recievingAddress,
 			sockAddrLen);
+	
 
-        /*iResult = recvfrom(serverSocket,
-                           accessBuffer,
-                           ACCESS_BUFFER_SIZE,
-                           0,
-                           (LPSOCKADDR)&clientAddress,
-                           &sockAddrLen);*/
-
-        //if (iResult == SOCKET_ERROR)
-        //{
-        //    printf("recvfrom failed with error: %d\n", WSAGetLastError());
-        //    continue;
-        //}
+		//memset(accessBuffer + ACCESS_BUFFER_SIZE - 1, '\0', 1);
 
         char ipAddress[IP_ADDRESS_LEN];
 		// copy client ip to local char[]
-        strcpy_s(ipAddress, sizeof(ipAddress), inet_ntoa(clientAddress.sin_addr));
+        strcpy_s(ipAddress, sizeof(ipAddress), inet_ntoa(recievingAddress.sin_addr));
 		// convert port number from TCP/IP byte order to
 		// little endian byte order
-        int clientPort = ntohs((u_short)clientAddress.sin_port);
+        int clientPort = ntohs((u_short)recievingAddress.sin_port);
 
         printf("Client connected from ip: %s, port: %d, sent: %s.\n", ipAddress, clientPort, accessBuffer);
 
-		break;
+
 		// possible server-shutdown logic could be put here
     }
 

@@ -5,7 +5,7 @@
 
 #define SERVER_PORT 15000
 
-#define OUTGOING_BUFFER_SIZE 1024
+#define OUTGOING_BUFFER_SIZE 2000
 // for demonstration purposes we will hard code
 // local host ip adderss
 #define SERVER_IP_ADDERESS "127.0.0.1"
@@ -22,7 +22,11 @@ int main(int argc,char* argv[])
     // size of sockaddr structure    
 	int sockAddrLen = sizeof(struct sockaddr);
 	// buffer we will use to store message
-    char outgoingBuffer[OUTGOING_BUFFER_SIZE];
+	char *outgoingBuffer = (char*)malloc(OUTGOING_BUFFER_SIZE);
+	if (!outgoingBuffer) {
+		printf("Too much characters\n");
+		return 0;
+	}
     // port used for communication with server
     int serverPort = SERVER_PORT;
 	// variable used to store function return value
@@ -53,13 +57,18 @@ int main(int argc,char* argv[])
 	printf("Enter message from server:\n");
 
 	// Read string from user into outgoing buffer
-    gets_s(outgoingBuffer, OUTGOING_BUFFER_SIZE);
+    //gets_s(outgoingBuffer, OUTGOING_BUFFER_SIZE);
 
 	//stres test za mnogo podataka
 
-	//memset(outgoingBuffer, 'a', OUTGOING_BUFFER_SIZE);
+	memset(outgoingBuffer, 'a', OUTGOING_BUFFER_SIZE);
 
-	//memset(outgoingBuffer + OUTGOING_BUFFER_SIZE - 2, 'c', 1);
+	memset(outgoingBuffer + OUTGOING_BUFFER_SIZE - 2, 'c', 1);
+		 //Set socket to nonblocking mode
+
+	unsigned long int nonBlockingMode = 1;
+	iResult = ioctlsocket(clientSocket, FIONBIO, &nonBlockingMode);
+
 
 	iResult = SafeUDPSend(&clientSocket,
 		outgoingBuffer,
@@ -75,9 +84,11 @@ int main(int argc,char* argv[])
         return 1;
     }
 
+	free(outgoingBuffer);
 	printf("Message sent to server, press any key to exit.\n");
 	_getch();
 
+	
     iResult = closesocket(clientSocket);
     if (iResult == SOCKET_ERROR)
     {

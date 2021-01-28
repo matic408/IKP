@@ -4,7 +4,7 @@
 
 #define SERVER_PORT 15000
 #define SERVER_SLEEP_TIME 50
-#define ACCESS_BUFFER_SIZE 1024
+#define ACCESS_BUFFER_SIZE 2000
 #define IP_ADDRESS_LEN 16
 
 #define SERVER_IP_ADDERESS "127.0.0.1"
@@ -24,7 +24,11 @@ int main(int argc,char* argv[])
 	// size of sockaddr structure
     int sockAddrLen=sizeof(struct sockaddr);
 	// buffer we will use to receive client message
-    char accessBuffer[ACCESS_BUFFER_SIZE];
+	char *accessBuffer = (char*)malloc(ACCESS_BUFFER_SIZE);
+	if (!accessBuffer) {
+		printf("Too much characters\n");
+		return 0;
+	}
 	// variable used to store function return value
 	int iResult;
 
@@ -122,9 +126,14 @@ int main(int argc,char* argv[])
 			ACCESS_BUFFER_SIZE,
 			(LPSOCKADDR)&recievingAddress,
 			sockAddrLen);
+
+		if (iResult == SOCKET_ERROR) {
+			printf("recvfrom failed with error: %d\n", WSAGetLastError());
+			continue;
+		}
 	
 
-		//memset(accessBuffer + ACCESS_BUFFER_SIZE - 1, '\0', 1);
+		memset(accessBuffer + ACCESS_BUFFER_SIZE - 1, '\0', 1);
 
         char ipAddress[IP_ADDRESS_LEN];
 		// copy client ip to local char[]
@@ -135,12 +144,15 @@ int main(int argc,char* argv[])
 
         printf("Client connected from ip: %s, port: %d, sent: %s.\n", ipAddress, clientPort, accessBuffer);
 
-
+		break;
 		// possible server-shutdown logic could be put here
     }
 
     // if we are here, it means that server is shutting down
 	// close socket and unintialize WinSock2 library
+
+	free(accessBuffer);
+
     iResult = closesocket(serverSocket);
     if (iResult == SOCKET_ERROR)
     {

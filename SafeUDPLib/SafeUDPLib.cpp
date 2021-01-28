@@ -41,7 +41,7 @@ int SafeUDPSend(SOCKET *clientSocket, char* sendingData, int sizeOfData, LPSOCKA
 
 	FD_SET set;
 	timeval timeVal;
-	timeVal.tv_sec = 1;
+	timeVal.tv_sec = 3;
 	timeVal.tv_usec = 0;
 
 	sockaddr_in recievingAddress;
@@ -70,8 +70,6 @@ int SafeUDPSend(SOCKET *clientSocket, char* sendingData, int sizeOfData, LPSOCKA
 			temp.num = htonl(SequenceNumToSend);
 			memcpy(temp.text, p, SEGMENT_SIZE);
 			SentWithoutAck = SLIDING_WINDOW_WIDTH;
-			//memcpy(sendData, &SequenceNumToSend, 4);
-			//memcpy(sendData + sizeof(int), p, SEGMENT_SIZE);
 			SequenceNumToSend++;
 
 			temp.CRC = crcFast((uint8_t*)temp.text, SEGMENT_SIZE);
@@ -85,10 +83,22 @@ int SafeUDPSend(SOCKET *clientSocket, char* sendingData, int sizeOfData, LPSOCKA
 
 
 			if (iResult == SOCKET_ERROR) {
-				int sklj = WSAGetLastError();
-				int sklj2 = 0;
+				ReleaseBufferPool(&bufferPool);
+				free(sendData);
+				free(recievedAck);
+				return iResult;
 			}
 
+		}
+
+		FD_ZERO(&set);
+		FD_SET(*clientSocket , &set);
+
+		iResult = select(0 /* ignored */, &set, NULL, NULL, &timeVal);
+
+		if (iResult == 0) {
+			SequenceNumToSend -= SLIDING_WINDOW_WIDTH;
+			continue;
 		}
 
 		memset(recievedAck, 0, 4);
@@ -101,7 +111,10 @@ int SafeUDPSend(SOCKET *clientSocket, char* sendingData, int sizeOfData, LPSOCKA
 			&addressLength);
 
 		if (iResult == SOCKET_ERROR) {
-			return -1;
+			ReleaseBufferPool(&bufferPool);
+			free(sendData);
+			free(recievedAck);
+			return iResult;
 		}
 
 		*recievedAck = ntohl(*recievedAck);
@@ -122,11 +135,6 @@ int SafeUDPSend(SOCKET *clientSocket, char* sendingData, int sizeOfData, LPSOCKA
 		SequenceNumToSend = *recievedAck;
 		SegmentsToSend -= RemovedFromPoolCount;
 
-		if (iResult == SOCKET_ERROR)
-		{
-			return -1;
-		}
-
 	}
 	ReleaseBufferPool(&bufferPool);
 	free(sendData);
@@ -141,8 +149,9 @@ int SafeUDPReceive(SOCKET *serverSocket, char * receivingData, int sizeOfBuffer,
 
 	int iResult = 0;
 	int expectedSeqNum = 1;
+	int errorWithSocket = 0;
 
-	char* received = (char*)malloc((sizeof(SEGMENT_SIZE) + 4) * SLIDING_WINDOW_WIDTH);
+	char* received = (char*)malloc((sizeof(SEGMENT_SIZE) + 4 + sizeof(uint8_t)) * SLIDING_WINDOW_WIDTH);
 	data* temp;
 
 	FD_SET set;
@@ -150,8 +159,6 @@ int SafeUDPReceive(SOCKET *serverSocket, char * receivingData, int sizeOfBuffer,
 
 	timeVal.tv_sec = 1;
 	timeVal.tv_usec = 0;
-
-
 
 	int countForEnd = 0;
 
@@ -175,6 +182,11 @@ int SafeUDPReceive(SOCKET *serverSocket, char * receivingData, int sizeOfBuffer,
 				0,
 				recievingAddress,
 				&addressLength);
+			
+			if (iResult == SOCKET_ERROR) {
+				errorWithSocket++;
+				break;
+			}
 
 			temp = (data*)received;
 
@@ -195,7 +207,7 @@ int SafeUDPReceive(SOCKET *serverSocket, char * receivingData, int sizeOfBuffer,
 
 		}
 
-		if (countForEnd == 3) {
+		if (countForEnd == 3 || errorWithSocket == 1) {
 			break;
 		}
 		expectedSeqNum = htonl(expectedSeqNum);
@@ -205,6 +217,12 @@ int SafeUDPReceive(SOCKET *serverSocket, char * receivingData, int sizeOfBuffer,
 			0,
 			recievingAddress,
 			addressLength);
+
+		if (iResult == SOCKET_ERROR) {
+			free(received);
+			return iResult;
+		}
+
 		expectedSeqNum = ntohl(expectedSeqNum);
 
 	}
